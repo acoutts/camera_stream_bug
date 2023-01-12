@@ -84,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _stopStream();
 
     // final res = await convertYUV420toImageColor(frame);
-    final res = await _convertYUV420Black(frame);
+    final res = await convertYUV420toImageColor(frame);
     setState(() {
       _imageData = res;
       _cameraImage = frame;
@@ -212,10 +212,11 @@ class _MyHomePageState extends State<MyHomePage> {
     await Permission.storage.request();
     await Permission.manageExternalStorage.request();
 
+    /// Uncomment to write frame to file
     // final path = await getExternalStorageDirectory();
-    final path = Directory('/storage/emulated/0/Download');
-    final file = File('${path.path}/img.yuv');
-    await file.writeAsBytes(concatenated);
+    // final path = Directory('/storage/emulated/0/Download');
+    // final file = File('${path.path}/img.yuv');
+    // await file.writeAsBytes(concatenated);
 
     const shift = (0xFF << 24);
 
