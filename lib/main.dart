@@ -83,7 +83,6 @@ class _MyHomePageState extends State<MyHomePage> {
     print('onFrame');
     _stopStream();
 
-    // final res = await convertYUV420toImageColor(frame);
     final res = await convertYUV420toImageColor(frame);
     setState(() {
       _imageData = res;
@@ -118,99 +117,18 @@ class _MyHomePageState extends State<MyHomePage> {
     return Image.memory(Uint8List.fromList(png));
   }
 
-  Future<Image?> convertYuvToImage(CameraImage image) async {
-    int imageWidth = image.width;
-    int imageHeight = image.height;
-    // ARGB array needed by Bitmap static factory method I use below.
-    final argbArray = Uint8List(imageWidth * imageHeight);
-    ByteBuffer yBuffer = image.planes[0].bytes.buffer;
-
-    // A YUV Image could be implemented with planar or semi planar layout.
-    // A planar YUV image would have following structure:
-    // YYYYYYYYYYYYYYYY
-    // ................
-    // UUUUUUUU
-    // ........
-    // VVVVVVVV
-    // ........
-    //
-    // While a semi-planar YUV image would have layout like this:
-    // YYYYYYYYYYYYYYYY
-    // ................
-    // UVUVUVUVUVUVUVUV   <-- Interleaved UV channel
-    // ................
-    // This is defined by row stride and pixel strides in the planes of the
-    // image.
-
-    // Plane 1 is always U & plane 2 is always V
-    // https://developer.android.com/reference/android/graphics/ImageFormat#YUV_420_888
-    ByteBuffer uBuffer = image.planes[1].bytes.buffer;
-    ByteBuffer vBuffer = image.planes[2].bytes.buffer;
-
-    // The U/V planes are guaranteed to have the same row stride and pixel
-    // stride.
-    int yRowStride = image.planes[0].bytesPerRow;
-    int yPixelStride = image.planes[0].bytesPerPixel!;
-    int uvRowStride = image.planes[1].bytesPerRow;
-    int uvPixelStride = image.planes[1].bytesPerPixel!;
-
-    int r, g, b;
-    int yValue, uValue, vValue;
-
-    var img = imglib.Image(imageWidth, imageHeight); // Create Image buffer
-
-    for (int y = 0; y < imageHeight; ++y) {
-      for (int x = 0; x < imageWidth; ++x) {
-        int yIndex = (y * yRowStride) + (x * yPixelStride);
-        // Y plane should have positive values belonging to [0...255]
-        yValue = (yBuffer.asUint8List()[yIndex] & 0xff);
-
-        int uvx = x ~/ 2;
-        int uvy = y ~/ 2;
-        // U/V Values are subsampled i.e. each pixel in U/V chanel in a
-        // YUV_420 image act as chroma value for 4 neighbouring pixels
-        int uvIndex = (uvy * uvRowStride) + (uvx * uvPixelStride);
-
-        // U/V values ideally fall under [-0.5, 0.5] range. To fit them into
-        // [0, 255] range they are scaled up and centered to 128.
-        // Operation below brings U/V values to [-128, 127].
-        uValue = (uBuffer.asUint8List()[uvIndex] & 0xff) - 128;
-        vValue = (vBuffer.asUint8List()[uvIndex] & 0xff) - 128;
-
-        // Compute RGB values per formula above.
-        r = (yValue + 1.370705 * vValue).toInt();
-        g = (yValue - (0.698001 * vValue) - (0.337633 * uValue)).toInt();
-        b = (yValue + 1.732446 * uValue).toInt();
-        r = r.clamp(0, 255);
-        g = g.clamp(0, 255);
-        b = b.clamp(0, 255);
-
-        // Use 255 for alpha value, no transparency. ARGB values are
-        // positioned in each byte of a single 4 byte integer
-        // [AAAAAAAARRRRRRRRGGGGGGGGBBBBBBBB]
-        int argbIndex = y * imageWidth + x;
-        img[argbIndex] =
-            (255 << 24) | (r & 255) << 16 | (g & 255) << 8 | (b & 255);
-      }
-    }
-
-    imglib.PngEncoder pngEncoder = new imglib.PngEncoder(level: 0, filter: 0);
-    List<int> png = pngEncoder.encodeImage(img);
-    return Image.memory(Uint8List.fromList(png));
-  }
-
   /// convert camera image to color image to be displayed
   Future<Image?> convertYUV420toImageColor(CameraImage image) async {
-    final concatenated = Uint8List.fromList(
-      [
-        ...image.planes[0].bytes,
-        ...image.planes[1].bytes,
-        ...image.planes[2].bytes,
-      ],
-    );
+    // final concatenated = Uint8List.fromList(
+    //   [
+    //     ...image.planes[0].bytes,
+    //     ...image.planes[1].bytes,
+    //     ...image.planes[2].bytes,
+    //   ],
+    // );
 
-    await Permission.storage.request();
-    await Permission.manageExternalStorage.request();
+    // await Permission.storage.request();
+    // await Permission.manageExternalStorage.request();
 
     /// Uncomment to write frame to file
     // final path = await getExternalStorageDirectory();
@@ -225,9 +143,6 @@ class _MyHomePageState extends State<MyHomePage> {
       final int height = image.height;
       final int uvRowStride = image.planes[1].bytesPerRow;
       final int uvPixelStride = image.planes[1].bytesPerPixel!;
-
-      print("uvRowStride: " + uvRowStride.toString());
-      print("uvPixelStride: " + uvPixelStride.toString());
 
       // imgLib -> Image package from https://pub.dartlang.org/packages/image
       var img = imglib.Image(width, height); // Create Image buffer
